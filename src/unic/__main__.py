@@ -23,6 +23,13 @@ parser.add_argument(
     help="List of input files to test the executables with.",
     required=True,
 )
+parser.add_argument(
+    "--max-depth",
+    "-d",
+    type=int,
+    default=5,
+    help="Maximum directory depth for recursive search (default: 5)",
+)
 
 
 def process_file(input_file, exec1, exec2, display_name=None):
@@ -208,7 +215,7 @@ def open_in_beyond_compare(results_dir):
             sys.exit(1)
 
 
-def get_txt_files_recursive(directory, max_depth=3):
+def get_txt_files_recursive(directory, max_depth=5):
     """Recursively find all .txt files up to max_depth directories deep."""
     txt_files = []
 
@@ -305,6 +312,7 @@ def main():
     exec1 = args.exec1
     exec2 = args.exec2
     input_files = args.files
+    max_depth = args.max_depth
 
     has_output_mismatches = False
     mismatched_files = []
@@ -333,7 +341,7 @@ def main():
             continue
 
         if os.path.isdir(input_file):
-            txt_files = get_txt_files_recursive(input_file)
+            txt_files = get_txt_files_recursive(input_file, max_depth)
             all_files.extend(txt_files)
         else:
             all_files.append(input_file)
@@ -354,7 +362,7 @@ def main():
             continue
 
         if os.path.isdir(input_file):
-            txt_files = get_txt_files_recursive(input_file)
+            txt_files = get_txt_files_recursive(input_file, max_depth)
             for txt_file in txt_files:
                 basename = os.path.basename(txt_file)
 
