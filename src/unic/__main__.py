@@ -30,8 +30,7 @@ parser.add_argument(
     default=5,
     help="Maximum directory depth for recursive search (default: 5)",
 )
-
-
+#check
 def process_file(input_file, exec1, exec2, display_name=None):
     # Convert to absolute paths
     exec1_path = os.path.abspath(exec1)
