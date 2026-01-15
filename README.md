@@ -1,213 +1,209 @@
-Here is the updated `README.md`. I have added all the new features found in your code: **Argument support** (using quotes), **Valgrind memory checks**, **Custom output directories**, and **Timeouts**.
-
-I also updated the "Results Structure" section because your code now saves files with suffixes like `_output.txt` and `_valgrind.txt` instead of the old naming convention.
 
 ```markdown
+<div align="center">
+
 # UniCompare
 
+```text
+   __  __      _ ______
+  / / / /___  (_) ____/___  ____ ___  ____  ____ _________
+ / / / / __ \/ / /   / __ \/ __ `__ \/ __ \/ __ `/ ___/ _ \
+/ /_/ / / / / / /___/ /_/ / / / / / / /_/ / /_/ / /  /  __/
+\____/_/ /_/_/\____/\____/_/ /_/ /_/ .___/\__,_/_/   \___/
+                                  /_/
 
 ```
+
+**Automated Output Comparison & Memory Testing for Students**
+
+</div>
 
 ---
 
-/ / / /___  () ***/***  ____ ___  ____  ____ _________
-/ / / / __ / / /   / __ / __ `__ \/ __ \/ __ `/ / _
+## 📖 Overview
 
-/ // / / / / / // // / / / / / / /*/ / /*/ / /  /  **/
-_***/*/ /*/*/_***/_***/*/ /*/ /*/ .***/_*,*/*/   ___/
-/*/
+**UniCompare** is a CLI tool designed to help university students test their coursework. It runs two executables side-by-side, feeds them input files, and compares their standard output. It now includes **Valgrind** integration for memory leak detection and **Beyond Compare** support for visual diffs.
+
+## ✨ Features
+
+* 🎯 **Precision Comparison**: Instantly diff stdout between two programs.
+* 🧠 **Memory Safety**: Automatic **Valgrind** integration to catch memory leaks.
+* 📂 **Recursive Testing**: deeply scans directories for input files (default: 5 levels).
+* ⚔️ **Visual Diffs**: Opens mismatched files directly in **Beyond Compare**.
+* ⏱️ **Timeout Guard**: Kills infinite loops automatically (default: 5s).
+* 🚀 **Argument Support**: Pass arguments directly to your executables.
+* 💾 **Auto-Save**: Mismatches and Valgrind reports are saved for review.
+
+---
+
+## ⚙️ Installation
+
+### 🆕 Beginner's Helper: Setup Virtual Environment
+
+If you are new to Python or getting "Externally Managed Environment" errors, follow these steps first:
+
+1. **Create the virtual environment** (run once):
+```bash
+python3 -m venv myvenv
 
 ```
 
-A simple program to help university students manage their coursework. Given 2 executable files, it will run them and compare their outputs with the given input file/s.
 
-## Features
+2. **Activate it** (run this every time you open a new terminal):
+* **Linux / Mac / WSL:**
+```bash
+source myvenv/bin/activate
 
-- ✅ **Compare outputs** of two executable programs
-- 🚀 **Argument Support**: Pass command-line arguments to your executables (e.g., `"./prog 10 20"`)
-- 🧠 **Memory Leak Detection**: Integration with **Valgrind** to check for memory leaks
-- 📁 **Recursive Traversal**: Search directories with configurable depth (default: 5 levels)
-- ⏱️ **Timeout Protection**: Automatically kills programs that run too long (default: 5s)
-- 💾 **Custom Output Location**: Choose where to save your test results
-- 🔍 **Smart Duplicates**: Handles duplicate filenames in different directories
-- 🔄 **Cross-platform**: Support for Windows/Linux (WSL recommended for Valgrind)
-- 📊 **Visual Diff**: Automatic integration with Beyond Compare
+```
 
-## Installation
+
+* **Windows (Command Prompt):**
+```cmd
+myvenv\Scripts\activate
+
+```
+
+
+* **Windows (PowerShell):**
+```powershell
+.\myvenv\Scripts\Activate.ps1
+
+```
+
+
+
+
+3. **Verify:** You should see `(myvenv)` at the start of your command line. Now you are ready to install!
 
 ### 1. Python Dependencies
-Run the following to install required packages:
+
+Once your environment is active, install the required libraries:
+
 ```bash
 pip install colorama pyfiglet
 
 ```
 
-### 2. Beyond Compare (Optional)
+### 2. External Tools (Optional)
 
-For visual diff functionality:
+| Tool | Windows | Linux | Usage |
+| --- | --- | --- | --- |
+| **Beyond Compare** | [Download Installer](https://www.scootersoftware.com/download.php) | `sudo apt install bcompare` | Visual diffs |
+| **Valgrind** | Use WSL (Ubuntu) | `sudo apt install valgrind` | Memory checks |
 
-* **Windows:** [Download here](https://www.scootersoftware.com/download.php) (Default: `C:\Program Files\Beyond Compare 4`)
-* **Linux:** `sudo apt install bcompare`
+---
 
-### 3. Valgrind (Optional)
-
-Required only if you want to use the Memory Check feature (`--valgrind`):
-
-* **Linux/WSL:** `sudo apt install valgrind`
-* **Windows:** Not supported natively; please use WSL (Ubuntu).
-
-## Usage
+## 🚀 Usage
 
 ### Basic Syntax
 
 ```bash
-unic <executable1> <executable2> --files <input_files...> [options]
+unic <exec1> <exec2> --files <inputs> [options]
 
 ```
 
-### Examples
+### Common Scenarios
 
-#### 1. Standard Comparison
+#### 🟢 Simple Comparison
 
-Compare two programs using a single input file:
+Compare `program1` and `program2` with a single input file:
 
 ```bash
-unic program1.exe program2.exe --files input.txt
+unic ./program1 ./program2 -f input.txt
 
 ```
 
-#### 2. Passing Arguments to Programs (New!)
+#### 🟡 Passing Arguments
 
-If your program requires arguments (e.g., `./a.out 100 17`), wrap the command in quotes:
+If your programs need command-line arguments (e.g., `./solver 100 20`), **wrap the command in quotes**:
 
 ```bash
-unic "./solution1 100 17" "./solution2 100 17" -f input.txt
+unic "./solver 100 20" "./student_sol 100 20" -f tests/input.txt
 
 ```
 
-#### 3. Memory Check with Valgrind
+#### 🔴 Memory Leak Check
 
-Run tests and check for memory leaks at the same time:
+Run tests and check for memory leaks using Valgrind:
 
 ```bash
 unic ./prog1 ./prog2 -f tests/ --valgrind
 
 ```
 
-#### 4. Recursive Directory Search
+#### 🔵 Custom Settings
 
-Recursively search for `.txt` files in a folder:
-
-```bash
-unic ./prog1 ./prog2 -f tests/
-
-```
-
-#### 5. Custom Output Folder and Timeout
-
-Save results to `my_results` and set timeout to 2 seconds:
+Save results to a specific folder and set a strict timeout:
 
 ```bash
-unic ./prog1 ./prog2 -f input.txt --output my_results --timeout 2
+unic ./prog1 ./prog2 -f tests/ --output my_report --timeout 2
 
 ```
 
-## Output Examples
+---
 
-### Successful Run
+## 📊 Output Example
 
-```
-==========================================
-Running tests on 3 file(s)...
-==========================================
+When running tests, UniCompare provides clear, color-coded feedback:
 
-[✓] tests/basic/input1.txt
-[✓] tests/basic/input2.txt
-[✓] tests/edge/special.txt
+```text
+============================================================
+Running tests on 4 file(s)...
+============================================================
 
-==========================================
-All tests passed! No mismatches found.
-==========================================
-
-```
-
-### Run with Errors (Mismatches & Memory Leaks)
-
-```
 [✓] tests/basic/simple.txt
 [✗] tests/advanced/hard.txt (Output Mismatch)
 [M] tests/memory/leak_test.txt (Memory Error)
     ↳ Memory leaks in Exec 1
 [T] tests/infinite_loop.txt (Timeout)
 
-==========================================
+============================================================
 Results saved in uniTestResults/ folder
-==========================================
+============================================================
 
 ```
-
-## File Organization
-
-### Results Structure
-
-By default, results are saved in `uniTestResults/` (configurable via `--output`).
-
-When a test fails, UniCompare saves:
-
-1. **Output files:** The standard output of both programs.
-2. **Valgrind logs:** (If `--valgrind` was used) The memory report.
-
-```
-uniTestResults/
-├── tests/advanced/hard.txt/
-│   ├── prog1_output.txt        # Output from first executable
-│   └── prog2_output.txt        # Output from second executable
-└── tests/memory/leak_test.txt/
-    ├── prog1_output.txt
-    ├── prog2_output.txt
-    └── prog1_valgrind.txt      # Memory leak report for prog1
-
-```
-
-## Command Line Arguments
-
-| Argument | Flag | Description | Default |
-| --- | --- | --- | --- |
-| `exec1` | N/A | Path to first executable (quote if using args) | Required |
-| `exec2` | N/A | Path to second executable (quote if using args) | Required |
-| `--files` | `-f` | List of input files or directories | Required |
-| `--output` | `-o` | Directory to save results | `uniTestResults` |
-| `--valgrind` | `-v` | Enable memory leak detection | `False` |
-| `--timeout` | `-t` | Timeout in seconds per test | `5.0` |
-| `--max-depth` | `-d` | Max recursion depth for directories | `5` |
-
-## Interactive Mode
-
-If mismatches are found, the program enters interactive mode:
-
-```
-Which input file would you like to view the differences for?
-(Type 'exit' to quit)
-Available files:
-  - hard.txt
-  - leak_test.txt
-
-Enter filename: hard.txt
-
-```
-
-* **Select a file:** Opens the outputs in **Beyond Compare**.
-* **Exit:** Type `exit` to close.
-
-## Authors
-
-Naor Biton (5'7 160lbs lean 12% bf)
-Denis Irkl (6'1 180lbs lean btw)
-Claude Sonnet 4 & Github Copilot Pro ❤️
 
 ---
 
-*Made for university students who need to compare program outputs efficiently.*
+## 🔧 Configuration & Arguments
+
+| Flag | Short | Description | Default |
+| --- | --- | --- | --- |
+| `--files` | `-f` | **(Required)** List of input files or directories to scan. | - |
+| `--output` | `-o` | Directory to save mismatched output/logs. | `uniTestResults` |
+| `--valgrind` | `-v` | Run inside Valgrind to detect memory errors. | `False` |
+| `--timeout` | `-t` | Max execution time (seconds) per test. | `5.0` |
+| `--max-depth` | `-d` | Max recursion depth for directory scanning. | `5` |
+
+---
+
+## 📂 File Structure
+
+When a test fails, results are organized automatically:
+
+```text
+uniTestResults/
+├── tests/advanced/hard.txt/
+│   ├── prog1_output.txt        # Stdout of program 1
+│   └── prog2_output.txt        # Stdout of program 2
+└── tests/memory/leak_test.txt/
+    ├── prog1_valgrind.txt      # Valgrind error report
+    └── ...
+
+```
+
+---
+
+## 👥 Authors
+
+* **Naor Biton**
+* **Denis Irkl**
+
+---
+
+<div align="center">
+<i>Made for university students who need to compare program outputs efficiently.</i>
+</div>
 
 ```
 
