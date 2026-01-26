@@ -50,8 +50,8 @@ parser.add_argument(
     "--timeout",
     "-t",
     type=float,
-    default=5.0,
-    help="Timeout in seconds for each test execution (default: 5.0)",
+    default=2.0,
+    help="Timeout in seconds for each test execution (default: 2.0)",
 )
 
 def get_safe_results_path(input_file, base_output_dir):
@@ -118,8 +118,6 @@ def process_file(input_file, exec1_cmd, exec2_cmd, display_name=None, use_valgri
 
     # Add Valgrind wrapper if requested
     if use_valgrind:
-        # --leak-check=full: detailed leak report
-        # --quiet: suppress verbose text (only show errors)
         valgrind_prefix = ["valgrind", "--leak-check=full", "--quiet"]
         cmd1 = valgrind_prefix + cmd1
         cmd2 = valgrind_prefix + cmd2
@@ -137,34 +135,54 @@ def process_file(input_file, exec1_cmd, exec2_cmd, display_name=None, use_valgri
         return False, None
 
     # Run executables
-    try:
-        proc1 = subprocess.Popen(
-            cmd1,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        try:
-            output1, stderr1 = proc1.communicate(input=input_data, timeout=timeout)
-        except subprocess.TimeoutExpired:
-            proc1.kill()
-            print(f"{Fore.YELLOW}[T] {display_text} (Timeout){Style.RESET_ALL}")
-            return False, None
+    output1 = ""
+    stderr1 = ""
+    output2 = ""
+    stderr2 = ""
+    timed_out = False
 
-        proc2 = subprocess.Popen(
-            cmd2,
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
+    def safe_decode(data):
+        """Helper to safely ensure data is string"""
+        if data is None:
+            return ""
+        if isinstance(data, bytes):
+            return data.decode('utf-8', errors='replace')
+        return data
+
+    try:
+        # --- Run Executable 1 ---
         try:
+            proc1 = subprocess.Popen(
+                cmd1,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            output1, stderr1 = proc1.communicate(input=input_data, timeout=timeout)
+        except subprocess.TimeoutExpired as e:
+            proc1.kill()
+            # Capture partial output and ensure it is decoded
+            output1 = safe_decode(e.stdout)
+            stderr1 = safe_decode(e.stderr)
+            timed_out = True
+        
+        # --- Run Executable 2 ---
+        try:
+            proc2 = subprocess.Popen(
+                cmd2,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
             output2, stderr2 = proc2.communicate(input=input_data, timeout=timeout)
-        except subprocess.TimeoutExpired:
+        except subprocess.TimeoutExpired as e:
             proc2.kill()
-            print(f"{Fore.YELLOW}[T] {display_text} (Timeout){Style.RESET_ALL}")
-            return False, None
+            # Capture partial output and ensure it is decoded
+            output2 = safe_decode(e.stdout)
+            stderr2 = safe_decode(e.stderr)
+            timed_out = True
 
     except FileNotFoundError:
         if use_valgrind:
@@ -188,6 +206,11 @@ def process_file(input_file, exec1_cmd, exec2_cmd, display_name=None, use_valgri
 
     # Logic for Success/Failure
     
+    # 0. Timeout (New priority) - Treat as mismatch so we can see partial output
+    if timed_out:
+        print(f"{Fore.YELLOW}[T] {display_text} (Timeout - Saving Partial Output){Style.RESET_ALL}")
+        return False, result_data
+
     # 1. Output Mismatch
     if output1 != output2:
         print(f"{Fore.RED}[✗] {display_text} (Output Mismatch){Style.RESET_ALL}")
@@ -385,14 +408,21 @@ def interactive_compare_loop(mismatched_files, base_output_dir):
 
         file_mapping[display_name] = results_path
 
+    # Sort keys for consistent numbering
+    sorted_display_names = sorted(file_mapping.keys())
+
     while True:
         try:
             print(
                 f"\n{Fore.CYAN}Which input file would you like to view the differences for?{Style.RESET_ALL}"
             )
             print(f"{Fore.CYAN}(Type 'exit' to quit){Style.RESET_ALL}")
+            
+            # Print numbered list
+            for idx, name in enumerate(sorted_display_names, 1):
+                 print(f"{Fore.YELLOW}{idx}.{Style.RESET_ALL} {name}")
 
-            user_input = input(f"{Fore.CYAN}Enter filename: {Style.RESET_ALL}").strip()
+            user_input = input(f"{Fore.CYAN}Enter number or filename: {Style.RESET_ALL}").strip()
 
             if user_input.lower() == "exit":
                 print(f"{Fore.GREEN}Exiting...{Style.RESET_ALL}")
@@ -400,22 +430,27 @@ def interactive_compare_loop(mismatched_files, base_output_dir):
 
             if not user_input:
                 continue
+            
+            # Handle number input or direct filename
+            target_name = None
+            if user_input.isdigit():
+                idx = int(user_input) - 1
+                if 0 <= idx < len(sorted_display_names):
+                    target_name = sorted_display_names[idx]
+            else:
+                target_name = user_input
 
-            if user_input not in file_mapping:
+            if not target_name or target_name not in file_mapping:
                 print(f"{Fore.RED}Error: '{user_input}' not found.{Style.RESET_ALL}")
-                print(f"{Fore.YELLOW}Available files:{Style.RESET_ALL}")
-                for display_name in sorted(file_mapping.keys()):
-                    print(f"  - {display_name}")
                 continue
 
-            results_path = file_mapping[user_input]
+            results_path = file_mapping[target_name]
             open_in_beyond_compare(results_path)
         except KeyboardInterrupt:
             print(f"\n{Fore.YELLOW}Interrupted by user. Exiting...{Style.RESET_ALL}")
             break
         except Exception as e:
             print(f"{Fore.RED}Unexpected error: {e}{Style.RESET_ALL}")
-
 
 def main():
     args = parser.parse_args()
@@ -441,7 +476,7 @@ def main():
     if use_valgrind:
         print(f"{Fore.MAGENTA}Memory Check Mode (Valgrind) Enabled{Style.RESET_ALL}")
     
-    print(f"{Fore.MAGENTA}Author: Denis Irkl (6'1 180lbs lean){Style.RESET_ALL}\n")
+    print(f"{Fore.MAGENTA}Author: Denis Irkl And Naor Biton{Style.RESET_ALL}\n")
 
     print(f"\n{Style.BRIGHT}{'=' * 60}{Style.RESET_ALL}")
     print(

@@ -167,7 +167,7 @@ Results saved in uniTestResults/ folder
 | `--files` | `-f` | **(Required)** List of input files or directories to scan. | - |
 | `--output` | `-o` | Directory to save mismatched output/logs. | `uniTestResults` |
 | `--valgrind` | `-v` | Run inside Valgrind to detect memory errors. | `False` |
-| `--timeout` | `-t` | Max execution time (seconds) per test. | `5.0` |
+| `--timeout` | `-t` | Max execution time (seconds) per test. | `2.0` |
 | `--max-depth` | `-d` | Max recursion depth for directory scanning. | `5` |
 
 ---
